@@ -9,18 +9,8 @@
   <!-- html2pdf Library for direct PDF generation -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
-    /* Prevent traditional page scrolling */
     body, html {
-      margin: 0;
-      padding: 0;
       height: 100dvh;
-      overflow: hidden; 
-    }
-    
-    @media screen {
-      .screen-hide {
-        display: none !important;
-      }
     }
     
     /* "Add" editing zone styling */
@@ -63,72 +53,6 @@
       z-index: 1;
       position: relative;
     }
-
-    /* Print Specific Styling */
-    @media print {
-      @page {
-        size: A4 landscape;
-        margin: 0;
-      }
-      body, html {
-        height: auto !important;
-        overflow: visible !important;
-      }
-      .print-hide, #pagination-container {
-        display: none !important;
-      }
-      .editing-zone {
-        display: none !important; /* Hide the whole last row editing zone */
-      }
-      .container-fluid {
-        height: auto !important;
-        display: block !important;
-      }
-      #inventory-container {
-        display: block !important;
-        height: auto !important;
-        overflow: visible !important;
-      }
-      /* Ensure inner row retains 9-col / 3-col aspect in print without outer borders */
-      .inventory-row {
-        display: flex !important;
-        height: 100vh !important;
-        page-break-inside: avoid;
-        page-break-after: always;
-        margin-bottom: 0 !important;
-        align-items: center !important;
-        flex-wrap: nowrap !important;
-      }
-      .col-8 {
-        width: 75% !important;
-        flex: 0 0 75% !important;
-        max-width: 75% !important;
-        padding-right: 20px !important;
-      }
-      .col-4 {
-        width: 25% !important;
-        flex: 0 0 25% !important;
-        max-width: 25% !important;
-        border-left: none !important; /* No outer borders */
-      }
-      .image-container {
-        height: 350px !important;
-        width: 100% !important;
-      }
-      /* Clean up inputs to look like raw text for printing */
-      .form-control {
-        border: none !important;
-        background: transparent !important;
-        padding: 0.25rem 0.5rem !important;
-        color: black !important;
-      }
-      .table-bordered {
-        border-color: #000 !important;
-      }
-      .table-bordered th, .table-bordered td {
-        border-color: #000 !important;
-      }
-    }
   </style>
 </head>
 <body class="overflow-hidden m-0 p-0 bg-white">
@@ -139,7 +63,7 @@
     </div>
     
     <!-- Page Turner / Controls -->
-    <div id="pagination-container" class="d-flex justify-content-between align-items-center p-3 bg-light border-top print-hide">
+    <div id="pagination-container" class="d-flex justify-content-between align-items-center p-3 bg-light border-top">
       <div>
         <button class="btn btn-outline-primary shadow-sm" onclick="prevPage()" id="btn-prev">&laquo; Previous</button>
       </div>
@@ -166,9 +90,8 @@
     ];
     let currentPage = 0;
 
-    function init() {
-      render();
-    }
+    // Boot
+    window.onload = render;
 
     function render() {
       const container = document.getElementById('inventory-container');
@@ -195,7 +118,7 @@
       const isActive = index === currentPage;
       
       const row = document.createElement('div');
-      row.className = `inventory-row row g-0 flex-grow-1 w-100 ${isActive ? '' : 'screen-hide'} ${isDraft ? 'editing-zone' : ''}`;
+      row.className = `inventory-row row g-0 flex-grow-1 w-100 ${isActive ? '' : 'd-none'}`;
       row.dataset.index = index;
       row.style.minHeight = '0';
       row.style.height = '100%'; // Force row to be exactly 100% of its container
@@ -207,15 +130,13 @@
       
       const label = document.createElement('label');
       label.style.cursor = 'pointer';
-      label.className = 'image-container d-flex justify-content-center align-items-center m-0 w-100 h-100 ' + (isDraft && !currentDraftImage ? 'add-zone' : '');
+      const imgSource = isDraft ? currentDraftImage : item.image;
+      label.className = 'image-container d-flex justify-content-center align-items-center m-0 w-100 h-100 ' + (!imgSource ? 'add-zone' : '');
       
-      if (isDraft && !currentDraftImage) {
-        label.innerHTML = `<span class="fs-1 text-secondary fw-bold" style="z-index: 1;">Add</span>`;
-      } else if (isDraft && currentDraftImage) {
-        label.innerHTML = `<img src="${currentDraftImage}" style="width: 100%; height: 100%; object-fit: contain;">`;
+      if (imgSource) {
+        label.innerHTML = `<img src="${imgSource}" style="width: 100%; height: 100%; object-fit: contain;">`;
       } else {
-        // Image shrinks to fit via object-fit
-        label.innerHTML = `<img src="${item.image}" style="width: 100%; height: 100%; object-fit: contain;">`;
+        label.innerHTML = `<span class="fs-1 text-secondary fw-bold" style="z-index: 1;">Add</span>`;
       }
       
       // Triggers native Apple/Android camera/library menus
@@ -243,7 +164,7 @@
       table.className = 'table table-bordered attribute-table mb-0 table-sm';
       
       const thead = document.createElement('thead');
-      thead.className = 'print-hide table-light';
+      thead.className = 'table-light';
       thead.style.position = 'sticky';
       thead.style.top = '0';
       thead.style.zIndex = '1';
@@ -252,7 +173,7 @@
           <th style="width: 38%">Name</th>
           <th style="width: 38%">Value</th>
           <th style="width: 14%">Unit</th>
-          <th class="print-hide text-center" style="width: 10%"></th>
+          <th class="text-center" style="width: 10%"></th>
         </tr>
       `;
       table.appendChild(thead);
@@ -281,7 +202,7 @@
         
         // Remove Action
         const tdAct = document.createElement('td');
-        tdAct.className = 'p-0 text-center print-hide align-middle';
+        tdAct.className = 'p-0 text-center align-middle';
         const btnAct = document.createElement('button');
         btnAct.className = 'btn btn-sm text-danger p-0 m-0 border-0 bg-transparent';
         btnAct.innerHTML = '<span class="fs-5 lh-1">&times;</span>';
@@ -297,7 +218,7 @@
       rightCol.appendChild(tableContainer);
       
       const addBtn = document.createElement('button');
-      addBtn.className = 'btn btn-outline-secondary w-100 print-hide mt-3 flex-shrink-0';
+      addBtn.className = 'btn btn-outline-secondary w-100 mt-3 flex-shrink-0';
       addBtn.textContent = '+ Add Attribute';
       addBtn.onclick = () => addAttributeRow(index, isDraft);
       rightCol.appendChild(addBtn);
@@ -311,19 +232,13 @@
     // --- State Handlers ---
 
     function updateAttribute(itemIndex, attrIndex, field, value, isDraft) {
-      if (isDraft) {
-        currentDraftAttributes[attrIndex][field] = value;
-      } else {
-        inventoryItems[itemIndex].attributes[attrIndex][field] = value;
-      }
+      const target = isDraft ? currentDraftAttributes : inventoryItems[itemIndex].attributes;
+      target[attrIndex][field] = value;
     }
 
     function removeAttribute(itemIndex, attrIndex, isDraft) {
-      if (isDraft) {
-        currentDraftAttributes.splice(attrIndex, 1);
-      } else {
-        inventoryItems[itemIndex].attributes.splice(attrIndex, 1);
-      }
+      const target = isDraft ? currentDraftAttributes : inventoryItems[itemIndex].attributes;
+      target.splice(attrIndex, 1);
       render(); // Structural DOM change requires redraw
     }
 
@@ -339,11 +254,8 @@
     }
 
     function addAttributeRow(itemIndex, isDraft) {
-      if (isDraft) {
-        currentDraftAttributes.push({ name: '', value: '', unit: '' });
-      } else {
-        inventoryItems[itemIndex].attributes.push({ name: '', value: '', unit: '' });
-      }
+      const target = isDraft ? currentDraftAttributes : inventoryItems[itemIndex].attributes;
+      target.push({ name: '', value: '', unit: '' });
       render(); // Structural DOM change requires redraw
     }
 
@@ -379,11 +291,7 @@
       inventoryItems.push(newItem);
       
       // Setup template for next item: keep latest variable names & units, but clear the values
-      currentDraftAttributes = currentDraftAttributes.map(a => ({
-        name: a.name,
-        value: '',
-        unit: a.unit
-      }));
+      currentDraftAttributes = currentDraftAttributes.map(a => ({ ...a, value: '' }));
       currentDraftImage = null;
       
       // Automatically navigate to the new editing zone (which is now at the end)
@@ -401,21 +309,9 @@
       document.getElementById('btn-prev').disabled = currentPage === 0;
       document.getElementById('btn-next').disabled = currentPage === totalPages - 1;
 
-      // Toggle Delete Item visibility on bottom bar
-      const deleteBtn = document.getElementById('btn-delete');
-      if (isDraftPage) {
-        deleteBtn.style.display = 'none';
-      } else {
-        deleteBtn.style.display = 'inline-block';
-      }
-
-      // Toggle Confirm button visibility on bottom bar
-      const confirmBtn = document.getElementById('btn-confirm');
-      if (isDraftPage && currentDraftImage) {
-        confirmBtn.style.display = 'inline-block';
-      } else {
-        confirmBtn.style.display = 'none';
-      }
+      // Toggle buttons visibility on bottom bar
+      document.getElementById('btn-delete').style.display = isDraftPage ? 'none' : 'inline-block';
+      document.getElementById('btn-confirm').style.display = (isDraftPage && currentDraftImage) ? 'inline-block' : 'none';
     }
 
     function prevPage() {
@@ -436,14 +332,9 @@
     }
 
     function updateVisibility() {
-      // Toggle `.screen-hide` instead of re-rendering DOM so user doesn't lose form focus
       const rows = document.querySelectorAll('.inventory-row');
       rows.forEach((row, index) => {
-        if (index === currentPage) {
-          row.classList.remove('screen-hide');
-        } else {
-          row.classList.add('screen-hide');
-        }
+        row.classList.toggle('d-none', index !== currentPage);
       });
     }
 
@@ -516,9 +407,6 @@
         generatePDF();
       }
     });
-
-    // Boot
-    window.onload = init;
   </script>
 </body>
 </html>
