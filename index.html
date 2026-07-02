@@ -198,6 +198,7 @@
       row.className = `inventory-row row g-0 flex-grow-1 w-100 ${isActive ? '' : 'screen-hide'} ${isDraft ? 'editing-zone' : ''}`;
       row.dataset.index = index;
       row.style.minHeight = '0';
+      row.style.height = '100%'; // Force row to be exactly 100% of its container
       
       // --- Left Col (8-col layout / 6-col on mobile) ---
       const leftCol = document.createElement('div');
@@ -231,16 +232,21 @@
       const rightCol = document.createElement('div');
       rightCol.className = 'col-6 col-md-4 p-3 d-flex flex-column border-start';
       rightCol.style.minHeight = '0';
-      
+      rightCol.style.height = '100%'; // Ensure it takes full height of the row
+
       const tableContainer = document.createElement('div');
       tableContainer.className = 'flex-grow-1';
       tableContainer.style.overflowY = 'auto'; // Ensures long attribute list is scrollable inside the column
+      tableContainer.style.minHeight = '0';
 
       const table = document.createElement('table');
       table.className = 'table table-bordered attribute-table mb-0 table-sm';
       
       const thead = document.createElement('thead');
       thead.className = 'print-hide table-light';
+      thead.style.position = 'sticky';
+      thead.style.top = '0';
+      thead.style.zIndex = '1';
       thead.innerHTML = `
         <tr>
           <th style="width: 38%">Name</th>
@@ -291,7 +297,7 @@
       rightCol.appendChild(tableContainer);
       
       const addBtn = document.createElement('button');
-      addBtn.className = 'btn btn-outline-secondary w-100 print-hide mt-3';
+      addBtn.className = 'btn btn-outline-secondary w-100 print-hide mt-3 flex-shrink-0';
       addBtn.textContent = '+ Add Attribute';
       addBtn.onclick = () => addAttributeRow(index, isDraft);
       rightCol.appendChild(addBtn);
