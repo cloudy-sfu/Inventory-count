@@ -235,12 +235,16 @@
       const tableContainer = document.createElement('div');
       tableContainer.className = 'flex-grow-1';
       tableContainer.style.overflowY = 'auto'; // Ensures long attribute list is scrollable inside the column
+      tableContainer.style.minHeight = '0';
 
       const table = document.createElement('table');
       table.className = 'table table-bordered attribute-table mb-0 table-sm';
       
       const thead = document.createElement('thead');
       thead.className = 'print-hide table-light';
+      thead.style.position = 'sticky';
+      thead.style.top = '0';
+      thead.style.zIndex = '1';
       thead.innerHTML = `
         <tr>
           <th style="width: 38%">Name</th>
