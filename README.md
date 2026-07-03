@@ -1,5 +1,5 @@
-# Inventory count
-Formatted report generator for inventory images with attributes
+# Item specification PDF generator
+Generate paginated PDF specification sheet by taking photos and attaching custom attributes
 
 
 

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Inventory Count</title>
+  <title>Item specification PDF generator</title>
   <!-- Bootstrap 5.3 Library -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <!-- html2pdf Library for direct PDF generation -->
@@ -58,8 +58,8 @@
 <body class="overflow-hidden m-0 p-0 bg-white">
   <!-- Container Layout -->
   <div class="container-fluid d-flex flex-column h-100 p-0">
-    <div id="inventory-container" class="flex-grow-1 d-flex flex-column" style="min-height: 0; overflow: hidden;">
-      <!-- Inventory rows dynamically injected here -->
+    <div id="image-container" class="flex-grow-1 d-flex flex-column" style="min-height: 0; overflow: hidden;">
+      <!-- Image rows dynamically injected here -->
     </div>
     
     <!-- Page Turner / Controls -->
@@ -79,7 +79,7 @@
 
   <script>
     // State management
-    let inventoryItems = [];
+    let imageItems = [];
     let currentDraftImage = null;
     
     // Initial Draft Template
@@ -94,11 +94,11 @@
     window.onload = render;
 
     function render() {
-      const container = document.getElementById('inventory-container');
+      const container = document.getElementById('image-container');
       container.innerHTML = ''; // Full redraw structure; local input changes won't trigger full re-render to avoid losing focus
       
       // 1. Render all finalized items
-      inventoryItems.forEach((item, index) => {
+      imageItems.forEach((item, index) => {
         container.appendChild(createRowElement(item, index, false));
       });
       
@@ -108,7 +108,7 @@
         image: null,
         attributes: currentDraftAttributes
       };
-      container.appendChild(createRowElement(draftItem, inventoryItems.length, true));
+      container.appendChild(createRowElement(draftItem, imageItems.length, true));
       
       updatePagination();
     }
@@ -118,7 +118,7 @@
       const isActive = index === currentPage;
       
       const row = document.createElement('div');
-      row.className = `inventory-row row g-0 flex-grow-1 w-100 ${isActive ? '' : 'd-none'}`;
+      row.className = `image-row row g-0 flex-grow-1 w-100 ${isActive ? '' : 'd-none'}`;
       row.dataset.index = index;
       row.style.minHeight = '0';
       row.style.height = '100%'; // Force row to be exactly 100% of its container
@@ -232,21 +232,21 @@
     // --- State Handlers ---
 
     function updateAttribute(itemIndex, attrIndex, field, value, isDraft) {
-      const target = isDraft ? currentDraftAttributes : inventoryItems[itemIndex].attributes;
+      const target = isDraft ? currentDraftAttributes : imageItems[itemIndex].attributes;
       target[attrIndex][field] = value;
     }
 
     function removeAttribute(itemIndex, attrIndex, isDraft) {
-      const target = isDraft ? currentDraftAttributes : inventoryItems[itemIndex].attributes;
+      const target = isDraft ? currentDraftAttributes : imageItems[itemIndex].attributes;
       target.splice(attrIndex, 1);
       render(); // Structural DOM change requires redraw
     }
 
     function deleteCurrentItem() {
       if (confirm('Are you sure you want to delete this entire item?')) {
-        inventoryItems.splice(currentPage, 1);
+        imageItems.splice(currentPage, 1);
         // Adjust pagination if we deleted the current page or a page before it
-        if (currentPage >= inventoryItems.length && currentPage > 0) {
+        if (currentPage >= imageItems.length && currentPage > 0) {
           currentPage--;
         }
         render();
@@ -254,7 +254,7 @@
     }
 
     function addAttributeRow(itemIndex, isDraft) {
-      const target = isDraft ? currentDraftAttributes : inventoryItems[itemIndex].attributes;
+      const target = isDraft ? currentDraftAttributes : imageItems[itemIndex].attributes;
       target.push({ name: '', value: '', unit: '' });
       render(); // Structural DOM change requires redraw
     }
@@ -272,7 +272,7 @@
           render(); // Show the uploaded image as a draft, await confirmation
         } else {
           // Replace image on a previously created item
-          inventoryItems[index].image = dataUrl;
+          imageItems[index].image = dataUrl;
           render();
         }
       };
@@ -283,26 +283,26 @@
     function confirmDraft() {
       if (!currentDraftImage) return;
 
-      // Lock in the draft as a confirmed inventory item
+      // Lock in the draft as a confirmed image item
       const newItem = {
         image: currentDraftImage,
         attributes: currentDraftAttributes.map(a => ({...a})) // deep copy
       };
-      inventoryItems.push(newItem);
+      imageItems.push(newItem);
       
       // Setup template for next item: keep latest variable names & units, but clear the values
       currentDraftAttributes = currentDraftAttributes.map(a => ({ ...a, value: '' }));
       currentDraftImage = null;
       
       // Automatically navigate to the new editing zone (which is now at the end)
-      currentPage = inventoryItems.length;
+      currentPage = imageItems.length;
       render();
     }
 
     // --- Pagination / View Handlers ---
 
     function updatePagination() {
-      const totalPages = inventoryItems.length + 1;
+      const totalPages = imageItems.length + 1;
       const isDraftPage = currentPage === totalPages - 1;
 
       document.getElementById('page-indicator').textContent = `Item ${currentPage + 1} of ${totalPages}`;
@@ -323,7 +323,7 @@
     }
 
     function nextPage() {
-      const totalPages = inventoryItems.length + 1;
+      const totalPages = imageItems.length + 1;
       if (currentPage < totalPages - 1) {
         currentPage++;
         updateVisibility();
@@ -332,14 +332,14 @@
     }
 
     function updateVisibility() {
-      const rows = document.querySelectorAll('.inventory-row');
+      const rows = document.querySelectorAll('.image-row');
       rows.forEach((row, index) => {
         row.classList.toggle('d-none', index !== currentPage);
       });
     }
 
     function generatePDF() {
-      if (inventoryItems.length === 0) {
+      if (imageItems.length === 0) {
         alert("No confirmed items to print. Please add and confirm an item first.");
         return;
       }
@@ -351,14 +351,14 @@
 
       const pdfContainer = document.createElement('div');
       
-      inventoryItems.forEach((item, index) => {
+      imageItems.forEach((item, index) => {
         const page = document.createElement('div');
         page.style.pageBreakAfter = 'always';
         page.style.position = 'relative';
         
         page.innerHTML = `
           <div style="position: absolute; bottom: 20px; right: 30px; font-family: sans-serif; font-size: 16px; font-weight: bold;">
-            ${index + 1} / ${inventoryItems.length}
+            ${index + 1} / ${imageItems.length}
           </div>
           <div style="display: flex; width: 100%; height: 680px; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box;">
             <div style="width: 65%; height: 100%; display: flex; align-items: center; justify-content: center; padding-right: 30px;">
@@ -388,7 +388,7 @@
 
       const opt = {
         margin:       0.2,
-        filename:     `Inventory_${timestamp}.pdf`,
+        filename:     `Images_${timestamp}.pdf`,
         image:        { type: 'jpeg', quality: 0.98 },
         html2canvas:  { scale: 2, useCORS: true },
         jsPDF:        { unit: 'in', format: 'a4', orientation: 'landscape' }
